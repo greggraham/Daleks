@@ -3,92 +3,94 @@ var DIR_RIGHT = 1;
 var DIR_UP    = 2;
 var DIR_DOWN  = 3;
 
+var CELL_SIZE = 32;
+var ROWS = 15;
+var COLUMNS = 15;
+var HSIZE = CELL_SIZE * COLUMNS;
+var VSIZE = CELL_SIZE * ROWS;
+var CENTER_X = HSIZE / 2 - CELL_SIZE / 2;
+var CENTER_Y = VSIZE / 2 - CELL_SIZE / 2;
+
+var DOCTOR_FRAME = 0;
+var SPEED = 3;
+
 enchant();
 window.onload = function() {
-    var game = new Core(320, 320);
+    var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
-    game.preload('http://enchantjs.com/assets/images/chara0.gif',
-            'http://enchantjs.com/assets/images/map0.gif');
+    game.preload('daleks.jpg', 'cell.png');
     
     game.onload = function() {
-        var bg = new Sprite(320, 320);
-        var maptip = game.assets['http://enchantjs.com/assets/images/map0.gif'];
-        var image = new Surface(320, 320);
+        var bg = new Sprite(HSIZE, VSIZE);
+        var maptip = game.assets['cell.png'];
+        var image = new Surface(HSIZE, VSIZE);
         
-        for (var j = 0; j < 320; j += 16) {
-            for (var i = 0; i < 320; i +=16) {
-                image.draw(maptip, 0, 0, 16, 16, i, j, 16, 16);
+        for (var j = 0; j < VSIZE; j += CELL_SIZE) {
+            for (var i = 0; i < HSIZE; i += CELL_SIZE) {
+                image.draw(maptip, 0, 0, CELL_SIZE, CELL_SIZE, i, j, CELL_SIZE, CELL_SIZE);
                     // maptip: the preloaded image asset used as the source image
                     // 0, 0: coordinates of upper left corner of the source clipping
-                    // 16, 16: width and height of the source clipping
+                    // CELL_SIZE, CELL_SIZE: width and height of the source clipping
                     // i, j: coorinates of upper left corner of the destination
-                    // 16, 16: width and height of the destination
+                    // CELL_SIZE, CELL_SIZE: width and height of the destination
             }
         }
         
         bg.image = image;
         game.rootScene.addChild(bg);
+
+        var doctor = new Sprite(CELL_SIZE, CELL_SIZE);
+        doctor.image = game.assets['daleks.jpg'];
+        doctor.x = CENTER_X;
+        doctor.y = CENTER_Y;
+        doctor.frame = DOCTOR_FRAME;
         
-        var girl = new Sprite(32, 32);
-        girl.image = game.assets['http://enchantjs.com/assets/images/chara0.gif'];
-        girl.x = 160 - 16;
-        girl.y = 160 - 16;
-        girl.frame = 7;
-        
-        girl.toX = girl.x;
-        girl.toY = girl.y;
-        girl.dir = DIR_DOWN;
-        girl.anim = [
-            15, 16, 17, 16, //Left
-            24, 25, 26, 25, //Right
-            33, 34, 35, 34, //Up
-            6,  7,  8,  7]; //Down
-        game.rootScene.addChild(girl);
-        girl.addEventListener(Event.ENTER_FRAME, function() {
-            if (girl.y > girl.toY) {
-                girl.dir = DIR_UP;
-                if (Math.abs(girl.y - girl.toY) < 3) {
-                    girl.y = girl.toY;
+        doctor.toX = doctor.x;
+        doctor.toY = doctor.y;
+        doctor.dir = DIR_DOWN;
+        game.rootScene.addChild(doctor);
+        doctor.addEventListener(Event.ENTER_FRAME, function() {
+            if (doctor.y > doctor.toY) {
+                doctor.dir = DIR_UP;
+                if (Math.abs(doctor.y - doctor.toY) < SPEED) {
+                    doctor.y = doctor.toY;
                 } else {
-                    girl.y -= 3;
+                    doctor.y -= SPEED;
                 }
-            } else if (girl.y < girl.toY) {
-                girl.dir = DIR_DOWN;
-                if (Math.abs(girl.y - girl.toY) < 3) {
-                    girl.y = girl.toY;
+            } else if (doctor.y < doctor.toY) {
+                doctor.dir = DIR_DOWN;
+                if (Math.abs(doctor.y - doctor.toY) < SPEED) {
+                    doctor.y = doctor.toY;
                 } else {
-                    girl.y += 3;
+                    doctor.y += SPEED;
                 }
             }
-            if (girl.x > girl.toX) {
-                girl.dir = DIR_LEFT;
-                if (Math.abs(girl.x - girl.toX) < 3) {
-                    girl.x = girl.toX;
+            if (doctor.x > doctor.toX) {
+                doctor.dir = DIR_LEFT;
+                if (Math.abs(doctor.x - doctor.toX) < SPEED) {
+                    doctor.x = doctor.toX;
                 } else {
-                    girl.x -= 3;
+                    doctor.x -= SPEED;
                 }
-            } else if (girl.x < girl.toX) {
-                girl.dir = DIR_RIGHT;
-                if (Math.abs(girl.x - girl.toX) < 3) {
-                    girl.x = girl.toX;
+            } else if (doctor.x < doctor.toX) {
+                doctor.dir = DIR_RIGHT;
+                if (Math.abs(doctor.x - doctor.toX) < SPEED) {
+                    doctor.x = doctor.toX;
                 } else {
-                    girl.x += 3;
+                    doctor.x += SPEED;
                 }
             }
-            
-            if (girl.x == girl.toX && girl.y == girl.toY)
-                girl.age = 1;
-            girl.frame = girl.anim[girl.dir *4 + (girl.age % 4)];
+
         });
         
         bg.addEventListener(Event.TOUCH_START, function(e) {
-            girl.toX = e.x - 16;
-            girl.toY = e.y - 16;
+            doctor.toX = e.x - CELL_SIZE / 2;
+            doctor.toY = e.y - CELL_SIZE / 2;
         });
         
         bg.addEventListener(Event.TOUCH_MOVE, function(e) {
-            girl.toX = e.x - 16;
-            girl.toY = e.y - 16;
+            doctor.toX = e.x - CELL_SIZE / 2;
+            doctor.toY = e.y - CELL_SIZE / 2;
         });
     };
     game.start();
