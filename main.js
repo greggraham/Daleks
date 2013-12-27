@@ -18,7 +18,7 @@ enchant();
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
-    game.preload('daleks.jpg', 'cell.png');
+    game.preload('daleks.png', 'cell.png');
     
     game.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
@@ -40,7 +40,7 @@ window.onload = function() {
         game.rootScene.addChild(bg);
 
         var doctor = new Sprite(CELL_SIZE, CELL_SIZE);
-        doctor.image = game.assets['daleks.jpg'];
+        doctor.image = game.assets['daleks.png'];
         doctor.x = CENTER_X;
         doctor.y = CENTER_Y;
         doctor.frame = DOCTOR_FRAME;
