@@ -1,20 +1,68 @@
-var DIR_LEFT  = 0;
-var DIR_RIGHT = 1;
-var DIR_UP    = 2;
-var DIR_DOWN  = 3;
-
 var CELL_SIZE = 32;
 var ROWS = 15;
 var COLUMNS = 15;
 var HSIZE = CELL_SIZE * COLUMNS;
 var VSIZE = CELL_SIZE * ROWS;
-var CENTER_X = HSIZE / 2 - CELL_SIZE / 2;
-var CENTER_Y = VSIZE / 2 - CELL_SIZE / 2;
 
 var DOCTOR_FRAME = 0;
 var SPEED = 3;
 
 enchant();
+
+function CellLoc(cellX, cellY) {
+	this.cellX = cellX;
+	this.cellY = cellY;
+	
+	this.bounds = function() {
+		if (this.cellX < 0) this.cellX = 0;
+		else if (this.cellX >= COLUMNS) this.cellX = COLUMNS - 1;
+		if (this.cellY < 0) this.cellY = 0;
+		else if (this.cellY >= ROWS) this.cellY = ROWS - 1;
+		this.pixelX = this.cellX * CELL_SIZE;
+		this.pixelY = this.cellY * CELL_SIZE;
+	};
+	
+	this.bounds();
+	
+	this.moveN = function() {
+		this.cellY--;
+		this.bounds();
+	};
+	this.moveNE = function() {
+		this.cellY--;
+		this.cellX++;
+		this.bounds();
+	};
+	this.moveE = function() {
+		this.cellX++;
+		this.bounds();
+	};
+	this.moveSE = function() {
+		this.cellY++;
+		this.cellX++;
+		this.bounds();
+	};
+	this.moveS = function() {
+		this.cellY++;
+		this.bounds();
+	};
+	this.moveSW = function() {
+		this.cellY++;
+		this.cellX--;
+		this.bounds();
+	};
+	this.moveW = function() {
+		this.cellX--;
+		this.bounds();
+	};
+	this.moveNW = function() {
+		this.cellY--;
+		this.cellX--;
+		this.bounds();
+	};
+
+}
+
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
@@ -41,41 +89,35 @@ window.onload = function() {
 
         var doctor = new Sprite(CELL_SIZE, CELL_SIZE);
         doctor.image = game.assets['daleks.png'];
-        doctor.x = CENTER_X;
-        doctor.y = CENTER_Y;
+		doctor.cellLoc = new CellLoc(Math.floor(COLUMNS / 2), Math.floor(ROWS / 2));
+        doctor.x = doctor.cellLoc.pixelX;
+        doctor.y = doctor.cellLoc.pixelY;
         doctor.frame = DOCTOR_FRAME;
         
-        doctor.toX = doctor.x;
-        doctor.toY = doctor.y;
-        doctor.dir = DIR_DOWN;
         game.rootScene.addChild(doctor);
         doctor.addEventListener(Event.ENTER_FRAME, function() {
-            if (doctor.y > doctor.toY) {
-                doctor.dir = DIR_UP;
-                if (Math.abs(doctor.y - doctor.toY) < SPEED) {
-                    doctor.y = doctor.toY;
+            if (doctor.y > doctor.cellLoc.pixelY) {
+                if (Math.abs(doctor.y - doctor.cellLoc.pixelY) < SPEED) {
+                    doctor.y = doctor.cellLoc.pixelY;
                 } else {
                     doctor.y -= SPEED;
                 }
-            } else if (doctor.y < doctor.toY) {
-                doctor.dir = DIR_DOWN;
-                if (Math.abs(doctor.y - doctor.toY) < SPEED) {
-                    doctor.y = doctor.toY;
+            } else if (doctor.y < doctor.cellLoc.pixelY) {
+                if (Math.abs(doctor.y - doctor.cellLoc.pixelY) < SPEED) {
+                    doctor.y = doctor.cellLoc.pixelY;
                 } else {
                     doctor.y += SPEED;
                 }
             }
-            if (doctor.x > doctor.toX) {
-                doctor.dir = DIR_LEFT;
-                if (Math.abs(doctor.x - doctor.toX) < SPEED) {
-                    doctor.x = doctor.toX;
+            if (doctor.x > doctor.cellLoc.pixelX) {
+                if (Math.abs(doctor.x - doctor.cellLoc.pixelX) < SPEED) {
+                    doctor.x = doctor.cellLoc.pixelX;
                 } else {
                     doctor.x -= SPEED;
                 }
-            } else if (doctor.x < doctor.toX) {
-                doctor.dir = DIR_RIGHT;
-                if (Math.abs(doctor.x - doctor.toX) < SPEED) {
-                    doctor.x = doctor.toX;
+            } else if (doctor.x < doctor.cellLoc.pixelX) {
+                if (Math.abs(doctor.x - doctor.cellLoc.pixelX) < SPEED) {
+                    doctor.x = doctor.cellLoc.pixelX;
                 } else {
                     doctor.x += SPEED;
                 }
@@ -83,15 +125,33 @@ window.onload = function() {
 
         });
         
-        bg.addEventListener(Event.TOUCH_START, function(e) {
-            doctor.toX = e.x - CELL_SIZE / 2;
-            doctor.toY = e.y - CELL_SIZE / 2;
-        });
-        
-        bg.addEventListener(Event.TOUCH_MOVE, function(e) {
-            doctor.toX = e.x - CELL_SIZE / 2;
-            doctor.toY = e.y - CELL_SIZE / 2;
-        });
+		function touchResponse(e) {
+            var deltaX = e.x - doctor.cellLoc.pixelX;
+            var deltaY = e.y - doctor.cellLoc.pixelY;
+			var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+			console.log(angle);
+			
+			if (angle < -150)
+				doctor.cellLoc.moveW();
+			else if (angle < -120)
+				doctor.cellLoc.moveNW();
+			else if (angle < -60)
+				doctor.cellLoc.moveN();
+			else if (angle < -30)
+				doctor.cellLoc.moveNE();
+			else if (angle < 30)
+				doctor.cellLoc.moveE();
+			else if (angle < 60)
+				doctor.cellLoc.moveSE();
+			else if (angle < 120)
+				doctor.cellLoc.moveS();
+			else if (angle < 150)
+				doctor.cellLoc.moveSW();
+			else
+				doctor.cellLoc.moveW();
+		}
+		
+        bg.addEventListener(Event.TOUCH_START, touchResponse);
     };
     game.start();
 };
