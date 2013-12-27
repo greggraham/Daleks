@@ -126,8 +126,8 @@ window.onload = function() {
         });
         
 		function touchResponse(e) {
-            var deltaX = e.x - doctor.cellLoc.pixelX;
-            var deltaY = e.y - doctor.cellLoc.pixelY;
+            var deltaX = e.x - (doctor.cellLoc.pixelX + CELL_SIZE / 2);
+            var deltaY = e.y - (doctor.cellLoc.pixelY + CELL_SIZE / 2);
 			var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
 			console.log(angle);
 			
