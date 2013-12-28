@@ -72,7 +72,6 @@ function CellLoc(cellX, cellY) {
 		var deltaX = destX - (this.pixelX + CELL_SIZE / 2);
 		var deltaY = destY - (this.pixelY + CELL_SIZE / 2);
 		var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-		console.log(angle);
 		
 		if (angle < -150)
 			this.moveW();
@@ -132,13 +131,17 @@ function spriteMover(obj) {
 	};
 }
 
-function Doctor(cellLoc, image) {
-	this.cellLoc = cellLoc
+function GameObject(cellLoc, image, frameNum) {
+	this.cellLoc = cellLoc;
 	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
 	this.sprite.image = image;
 	this.sprite.x = this.cellLoc.pixelX;
 	this.sprite.y = this.cellLoc.pixelY;
-	this.sprite.frame = DOCTOR_FRAME;
+	this.sprite.frame = frameNum;
+}
+
+function Doctor(cellLoc, image) {
+	GameObject.call(this, cellLoc, image, DOCTOR_FRAME);
 	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
 	var cellLoc = this.cellLoc;
 	this.moveTo = function(e) {
@@ -147,12 +150,7 @@ function Doctor(cellLoc, image) {
 }
 
 function Dalek(cellLoc, image) {
-	this.cellLoc = cellLoc;
-	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
-	this.sprite.image = image;
-	this.sprite.x = this.cellLoc.pixelX;
-	this.sprite.y = this.cellLoc.pixelY;
-	this.sprite.frame = DALEK_FRAME;
+	GameObject.call(this, cellLoc, image, DALEK_FRAME);
 	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
 	var cellLoc = this.cellLoc;
 	this.moveTo = function(cellLoc) {
@@ -160,14 +158,6 @@ function Dalek(cellLoc, image) {
 	}
 }
 
-function Tardis(cellLoc, image) {
-	this.cellLoc = cellLoc;
-	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
-	this.sprite.image = image;
-	this.sprite.x = this.cellLoc.pixelX;
-	this.sprite.y = this.cellLoc.pixelY;
-	this.sprite.frame = TARDIS_FRAME;
-}
 
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
@@ -204,8 +194,9 @@ window.onload = function() {
 			game.rootScene.addChild(daleks[i].sprite);
 		}
 		
-		var tardis = new Tardis(new CellLoc(0, randInt(ROWS)),
-								game.assets['daleks.png']);
+		var tardis = new GameObject(new CellLoc(0, randInt(ROWS)),
+								game.assets['daleks.png'],
+								TARDIS_FRAME);
 		game.rootScene.addChild(tardis.sprite);
 
 		
