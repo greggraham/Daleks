@@ -99,17 +99,10 @@ function CellLoc(cellX, cellY) {
 	}
 }
 
-function Doctor(cellLoc, image) {
-	this.cellLoc = cellLoc
-	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
-	this.sprite.image = image;
-	this.sprite.x = this.cellLoc.pixelX;
-	this.sprite.y = this.cellLoc.pixelY;
-	this.sprite.frame = DOCTOR_FRAME;
-	
-	var s = this.sprite;
-	var cl = this.cellLoc;
-	this.sprite.addEventListener(Event.ENTER_FRAME, function() {
+function spriteMover(obj) {
+	var s = obj.sprite;
+	var cl = obj.cellLoc;
+	return function() {
 		if (s.y > cl.pixelY) {
 			if (Math.abs(s.y - cl.pixelY) < SPEED) {
 				s.y = cl.pixelY;
@@ -136,11 +129,20 @@ function Doctor(cellLoc, image) {
 				s.x += SPEED;
 			}
 		}
+	};
+}
 
-	});
-
+function Doctor(cellLoc, image) {
+	this.cellLoc = cellLoc
+	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
+	this.sprite.image = image;
+	this.sprite.x = this.cellLoc.pixelX;
+	this.sprite.y = this.cellLoc.pixelY;
+	this.sprite.frame = DOCTOR_FRAME;
+	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
+	var cellLoc = this.cellLoc;
 	this.moveTo = function(e) {
-		cl.moveTowardsPixel(e.x, e.y);
+		cellLoc.moveTowardsPixel(e.x, e.y);
 	};
 }
 
@@ -151,39 +153,8 @@ function Dalek(cellLoc, image) {
 	this.sprite.x = this.cellLoc.pixelX;
 	this.sprite.y = this.cellLoc.pixelY;
 	this.sprite.frame = DALEK_FRAME;
-	
-	var s = this.sprite;
-	var cl = this.cellLoc;
-	this.sprite.addEventListener(Event.ENTER_FRAME, function() {
-		if (s.y > cl.pixelY) {
-			if (Math.abs(s.y - cl.pixelY) < SPEED) {
-				s.y = cl.pixelY;
-			} else {
-				s.y -= SPEED;
-			}
-		} else if (s.y < cl.pixelY) {
-			if (Math.abs(s.y - cl.pixelY) < SPEED) {
-				s.y = cl.pixelY;
-			} else {
-				s.y += SPEED;
-			}
-		}
-		if (s.x > cl.pixelX) {
-			if (Math.abs(s.x - cl.pixelX) < SPEED) {
-				s.x = cl.pixelX;
-			} else {
-				s.x -= SPEED;
-			}
-		} else if (s.x < cl.pixelX) {
-			if (Math.abs(s.x - cl.pixelX) < SPEED) {
-				s.x = cl.pixelX;
-			} else {
-				s.x += SPEED;
-			}
-		}
-
-	});
-	
+	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
+	var cellLoc = this.cellLoc;
 	this.moveTo = function(cellLoc) {
 		this.cellLoc.moveTowardsCell(cellLoc);
 	}
