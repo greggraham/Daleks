@@ -94,7 +94,8 @@ function CellLoc(cellX, cellY) {
 	};
 	
 	this.moveTowardsCell = function(cellLoc) {
-		this.moveTowardsPixel(cellLoc.pixelX, cellLoc.pixelY);
+		this.moveTowardsPixel(cellLoc.pixelX + CELL_SIZE / 2,
+							  cellLoc.pixelY + CELL_SIZE / 2);
 	}
 }
 
@@ -201,10 +202,23 @@ window.onload = function() {
 
 		
         bg.addEventListener(Event.TOUCH_START, function(e) {
-		    doctor.moveTo(e);
 			for (var i = 0; i < NUM_DALEKS; i++) {
-				daleks[i].moveTo(doctor.cellLoc);
+				if (daleks[i] != null) {
+					daleks[i].moveTo(doctor.cellLoc);
+					for (var j = 0; j < NUM_DALEKS; j++) {
+						if (i != j && daleks[j] != null &&
+						    daleks[i].cellLoc.cellX == daleks[j].cellLoc.cellX &&
+							daleks[i].cellLoc.cellY == daleks[j].cellLoc.cellY) {
+							game.rootScene.removeChild(daleks[i].sprite);
+							game.rootScene.removeChild(daleks[j].sprite);
+							daleks[i] = null;
+							daleks[j] = null;
+							break;
+						}
+					}
+				}
 			}
+		    doctor.moveTo(e);
 		});
 
     };
