@@ -9,6 +9,10 @@ var DALEK_FRAME = 1;
 var TARDIS_FRAME = 2;
 var SPEED = 3;
 var NUM_DALEKS = 15;
+var NORMAL = 0;
+var DESTINED = 1;
+var EXPLODING = 3;
+var DEAD = 4;
 
 enchant();
 
@@ -96,53 +100,65 @@ function CellLoc(cellX, cellY) {
 	this.moveTowardsCell = function(cellLoc) {
 		this.moveTowardsPixel(cellLoc.pixelX + CELL_SIZE / 2,
 							  cellLoc.pixelY + CELL_SIZE / 2);
-	}
-}
-
-function spriteMover(obj) {
-	var s = obj.sprite;
-	var cl = obj.cellLoc;
-	return function() {
-		if (s.y > cl.pixelY) {
-			if (Math.abs(s.y - cl.pixelY) < SPEED) {
-				s.y = cl.pixelY;
-			} else {
-				s.y -= SPEED;
-			}
-		} else if (s.y < cl.pixelY) {
-			if (Math.abs(s.y - cl.pixelY) < SPEED) {
-				s.y = cl.pixelY;
-			} else {
-				s.y += SPEED;
-			}
-		}
-		if (s.x > cl.pixelX) {
-			if (Math.abs(s.x - cl.pixelX) < SPEED) {
-				s.x = cl.pixelX;
-			} else {
-				s.x -= SPEED;
-			}
-		} else if (s.x < cl.pixelX) {
-			if (Math.abs(s.x - cl.pixelX) < SPEED) {
-				s.x = cl.pixelX;
-			} else {
-				s.x += SPEED;
-			}
-		}
+	};
+	
+	this.equals = function(cellLoc) {
+		return this.cellX == cellLoc.cellX && this.cellY == cellLoc.cellY;
+	};
+	
+	this.pixelEquals = function(s) {
+		return this.pixelX == s.x && this.pixelY == s.y;
 	};
 }
 
-function GameObject(cellLoc, image, frameNum) {
-	this.cellLoc = cellLoc;
-	this.sprite = new Sprite(CELL_SIZE, CELL_SIZE);
-	this.sprite.image = image;
-	this.sprite.x = this.cellLoc.pixelX;
-	this.sprite.y = this.cellLoc.pixelY;
-	this.sprite.frame = frameNum;
+function createGameObject(loc, image, frameNum) {
+	var s = new Sprite(CELL_SIZE, CELL_SIZE);
+	s.image = image;
+	s.x = loc.pixelX;
+	s.y = loc.pixelY;
+	s.frame = frameNum;
+	var obj = {
+		cellLoc : loc,
+		sprite : s,
+		moveSprite = function() {
+			var s = this.sprite;
+			var toX = this.cellLoc.pixelX;
+			var toY = this.cellLoc.pixelY;
+			if (s.y > toY) {
+				if (Math.abs(s.y - toY) < SPEED) {
+					s.y = toY;
+				} else {
+					s.y -= SPEED;
+				}
+			} else if (s.y < toY) {
+				if (Math.abs(s.y - toY) < SPEED) {
+					s.y = toY;
+				} else {
+					s.y += SPEED;
+				}
+			}
+			if (s.x > toX) {
+				if (Math.abs(s.x - toX) < SPEED) {
+					s.x = toX;
+				} else {
+					s.x -= SPEED;
+				}
+			} else if (s.x < toX) {
+				if (Math.abs(s.x - toX) < SPEED) {
+					s.x = toX;
+				} else {
+					s.x += SPEED;
+				}
+			}
+		},
+	};
+	return obj;
 }
 
-function Doctor(cellLoc, image) {
-	GameObject.call(this, cellLoc, image, DOCTOR_FRAME);
+
+function createDoctor(loc, image) {
+	var gameObject = createGameObject(cellLoc, image, DOCTOR_FRAME);
+	var obj 
 	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
 	var cellLoc = this.cellLoc;
 	this.moveTo = function(e) {
@@ -152,10 +168,14 @@ function Doctor(cellLoc, image) {
 
 function Dalek(cellLoc, image) {
 	GameObject.call(this, cellLoc, image, DALEK_FRAME);
+	this.state = NORMAL;
 	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
 	var cellLoc = this.cellLoc;
 	this.moveTo = function(cellLoc) {
 		this.cellLoc.moveTowardsCell(cellLoc);
+	}
+	this.arrived = function() {
+		return this.cellLoc.pixelEquals(this.sprite);
 	}
 }
 
@@ -203,17 +223,17 @@ window.onload = function() {
 		
         bg.addEventListener(Event.TOUCH_START, function(e) {
 			for (var i = 0; i < NUM_DALEKS; i++) {
-				if (daleks[i] != null) {
+				if (daleks[i].state == EXPLODING) {
+				} else if (daleks[i].state == DESTINED) {
+					if (daleks[i].arrived()) {
+					}
+				}
+				else if (daleks[i].state == NORMAL) {
 					daleks[i].moveTo(doctor.cellLoc);
 					for (var j = 0; j < NUM_DALEKS; j++) {
-						if (i != j && daleks[j] != null &&
-						    daleks[i].cellLoc.cellX == daleks[j].cellLoc.cellX &&
-							daleks[i].cellLoc.cellY == daleks[j].cellLoc.cellY) {
-							game.rootScene.removeChild(daleks[i].sprite);
-							game.rootScene.removeChild(daleks[j].sprite);
-							daleks[i] = null;
-							daleks[j] = null;
-							break;
+						if (i != j && daleks[j].alive && daleks[i].cellLoc.equals(daleks[j].cellLoc)) {
+							daleks[i].collisionState = DESTINED;
+							daleks[j].collisionState = DESTINED;
 						}
 					}
 				}
