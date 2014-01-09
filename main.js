@@ -1,3 +1,5 @@
+// Change for class.
+
 var CELL_SIZE = 32;
 var ROWS = 15;
 var COLUMNS = 15;
