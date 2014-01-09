@@ -157,24 +157,23 @@ function createGameObject(loc, image, frameNum) {
 
 
 function createDoctor(loc, image) {
-	var gameObject = createGameObject(cellLoc, image, DOCTOR_FRAME);
-	var obj 
-	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
-	var cellLoc = this.cellLoc;
-	this.moveTo = function(e) {
+	var gameObject = createGameObject(loc, image, DOCTOR_FRAME);
+	var doctor = Object.create(gameObject);
+	doctor.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
+	doctor.moveTo = function(e) {
 		cellLoc.moveTowardsPixel(e.x, e.y);
 	};
+	return doctor;
 }
 
-function Dalek(cellLoc, image) {
-	GameObject.call(this, cellLoc, image, DALEK_FRAME);
-	this.state = NORMAL;
-	this.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
-	var cellLoc = this.cellLoc;
-	this.moveTo = function(cellLoc) {
+function createDalek(loc, image) {
+	var dalek = Object.create(createGameObject(loc, image, DALEK_FRAME));
+	dalek.state = NORMAL;
+	dalek.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
+	dalek.moveTo = function(cellLoc) {
 		this.cellLoc.moveTowardsCell(cellLoc);
 	}
-	this.arrived = function() {
+	dalek.arrived = function() {
 		return this.cellLoc.pixelEquals(this.sprite);
 	}
 }
