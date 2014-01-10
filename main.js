@@ -25,7 +25,7 @@ function randInt(limit) {
 function CellLoc(cellX, cellY) {
 	this.cellX = cellX;
 	this.cellY = cellY;
-	
+
 	this.normalize = function() {
 		if (this.cellX < 0) this.cellX = 0;
 		else if (this.cellX >= COLUMNS) this.cellX = COLUMNS - 1;
@@ -34,9 +34,9 @@ function CellLoc(cellX, cellY) {
 		this.pixelX = this.cellX * CELL_SIZE;
 		this.pixelY = this.cellY * CELL_SIZE;
 	};
-	
+
 	this.normalize();
-	
+
 	this.moveN = function() {
 		this.cellY--;
 		this.normalize();
@@ -73,12 +73,12 @@ function CellLoc(cellX, cellY) {
 		this.cellX--;
 		this.normalize();
 	};
-	
+
 	this.moveTowardsPixel = function(destX, destY) {
 		var deltaX = destX - (this.pixelX + CELL_SIZE / 2);
 		var deltaY = destY - (this.pixelY + CELL_SIZE / 2);
 		var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-		
+
 		if (angle < -150)
 			this.moveW();
 		else if (angle < -120)
@@ -98,16 +98,16 @@ function CellLoc(cellX, cellY) {
 		else
 			this.moveW();
 	};
-	
+
 	this.moveTowardsCell = function(cellLoc) {
 		this.moveTowardsPixel(cellLoc.pixelX + CELL_SIZE / 2,
 							  cellLoc.pixelY + CELL_SIZE / 2);
 	};
-	
+
 	this.equals = function(cellLoc) {
 		return this.cellX == cellLoc.cellX && this.cellY == cellLoc.cellY;
 	};
-	
+
 	this.pixelEquals = function(s) {
 		return this.pixelX == s.x && this.pixelY == s.y;
 	};
@@ -122,7 +122,7 @@ function createGameObject(loc, image, frameNum) {
 	var obj = {
 		cellLoc : loc,
 		sprite : s,
-		moveSprite = function() {
+    moveSprite : function() {
 			var s = this.sprite;
 			var toX = this.cellLoc.pixelX;
 			var toY = this.cellLoc.pixelY;
@@ -159,25 +159,30 @@ function createGameObject(loc, image, frameNum) {
 
 
 function createDoctor(loc, image) {
-	var gameObject = createGameObject(loc, image, DOCTOR_FRAME);
-	var doctor = Object.create(gameObject);
-	doctor.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
+	var doctor = Object.create(createGameObject(loc, image, DOCTOR_FRAME));
 	doctor.moveTo = function(e) {
-		cellLoc.moveTowardsPixel(e.x, e.y);
+		this.cellLoc.moveTowardsPixel(e.x, e.y);
 	};
+	doctor.sprite.addEventListener(Event.ENTER_FRAME, function() {
+    doctor.moveSprite();
+  });
 	return doctor;
 }
+
 
 function createDalek(loc, image) {
 	var dalek = Object.create(createGameObject(loc, image, DALEK_FRAME));
 	dalek.state = NORMAL;
-	dalek.sprite.addEventListener(Event.ENTER_FRAME, spriteMover(this));
 	dalek.moveTo = function(cellLoc) {
 		this.cellLoc.moveTowardsCell(cellLoc);
-	}
+	};
 	dalek.arrived = function() {
 		return this.cellLoc.pixelEquals(this.sprite);
-	}
+	};
+	dalek.sprite.addEventListener(Event.ENTER_FRAME, function() {
+    dalek.moveSprite()
+  });
+  return dalek;
 }
 
 
@@ -185,12 +190,12 @@ window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
     game.preload('daleks.png', 'cell.png');
-    
+
     game.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
         var maptip = game.assets['cell.png'];
         var image = new Surface(HSIZE, VSIZE);
-        
+
         for (var j = 0; j < VSIZE; j += CELL_SIZE) {
             for (var i = 0; i < HSIZE; i += CELL_SIZE) {
                 image.draw(maptip, 0, 0, CELL_SIZE, CELL_SIZE, i, j, CELL_SIZE, CELL_SIZE);
@@ -201,27 +206,27 @@ window.onload = function() {
                     // CELL_SIZE, CELL_SIZE: width and height of the destination
             }
         }
-        
+
         bg.image = image;
         game.rootScene.addChild(bg);
-		
-		var doctor = new Doctor(new CellLoc(COLUMNS - 1, randInt(ROWS)),
+
+		var doctor = createDoctor(new CellLoc(COLUMNS - 1, randInt(ROWS)),
 								game.assets['daleks.png']);
 		game.rootScene.addChild(doctor.sprite);
 
 		var daleks = new Array(NUM_DALEKS);
 		for (var i = 0; i < NUM_DALEKS; i++) {
-			daleks[i] = new Dalek(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
+			daleks[i] = createDalek(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
 								  game.assets['daleks.png']);
 			game.rootScene.addChild(daleks[i].sprite);
 		}
-		
-		var tardis = new GameObject(new CellLoc(0, randInt(ROWS)),
+
+		var tardis = createGameObject(new CellLoc(0, randInt(ROWS)),
 								game.assets['daleks.png'],
 								TARDIS_FRAME);
 		game.rootScene.addChild(tardis.sprite);
 
-		
+
         bg.addEventListener(Event.TOUCH_START, function(e) {
 			for (var i = 0; i < NUM_DALEKS; i++) {
 				if (daleks[i].state == EXPLODING) {
