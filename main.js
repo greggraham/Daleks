@@ -80,25 +80,28 @@ function CellLoc(cellX, cellY) {
         var deltaY = destY - (this.pixelY + CELL_SIZE / 2);
         var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
 
-        if (angle < -150)
+        if (angle < -150) {
             this.moveW();
-        else if (angle < -120)
+        } else if (angle < -120) {
             this.moveNW();
-            else if (angle < -60)
-                this.moveN();
-                else if (angle < -30)
-                    this.moveNE();
-                    else if (angle < 30)
-                        this.moveE();
-                        else if (angle < 60)
-                            this.moveSE();
-                            else if (angle < 120)
-                                this.moveS();
-                                else if (angle < 150)
-                                    this.moveSW();
-                                    else
-                                        this.moveW();
+        } else if (angle < -60) {
+            this.moveN();
+        } else if (angle < -30) {
+            this.moveNE();
+        } else if (angle < 30) {
+            this.moveE();
+        } else if (angle < 60) {
+            this.moveSE();
+        } else if (angle < 120) {
+            this.moveS();
+        } else if (angle < 150) {
+            this.moveSW();
+        } else {
+            this.moveW();
+        }
     };
+
+    45 / 2
 
     this.moveTowardsCell = function(cellLoc) {
         this.moveTowardsPixel(cellLoc.pixelX + CELL_SIZE / 2,
