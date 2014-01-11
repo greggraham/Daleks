@@ -17,91 +17,112 @@ var DESTINED = 1;
 var EXPLODING = 3;
 var DEAD = 4;
 
+// Initialize the Enchant.js library.
 enchant();
 
+// Conveniently generate a random integer from 0 up to but not including limit.
 function randInt(limit) {
     return Math.floor(Math.random() * limit);
 }
 
-function CellLoc(cellX, cellY) {
-    this.cellX = cellX;
-    this.cellY = cellY;
+// Cell location object
+function CellLoc(cInX, cInY) {
+    var cX = cInX;
+    var cY = cInY;
+    var pX;
+    var pY;
 
-    this.normalize = function() {
-        if (this.cellX < 0) this.cellX = 0;
-        else if (this.cellX >= COLUMNS) this.cellX = COLUMNS - 1;
-        if (this.cellY < 0) this.cellY = 0;
-        else if (this.cellY >= ROWS) this.cellY = ROWS - 1;
-        this.pixelX = this.cellX * CELL_SIZE;
-        this.pixelY = this.cellY * CELL_SIZE;
+    var normalize = function() {
+        if (cX < 0) cX = 0;
+        else if (cX >= COLUMNS) cX = COLUMNS - 1;
+        if (cY < 0) cY = 0;
+        else if (cY >= ROWS) cY = ROWS - 1;
+        pX = cX * CELL_SIZE;
+        pY = cY * CELL_SIZE;
     };
 
-    this.normalize();
+    normalize();
 
-    this.moveN = function() {
-        this.cellY--;
-        this.normalize();
+    Object.defineProperty(this, "cellX", {
+        get: function() { return cX; },
+        set: function(newX) { cX = newX; normalize(); }
+    });
+
+    Object.defineProperty(this, "cellY", {
+        get: function() { return cY; },
+        set: function(newY) { cY = newY; normalize(); }
+    });
+
+    Object.defineProperty(this, "pixelX", {
+        get: function() { return pX; },
+    });
+
+    Object.defineProperty(this, "pixelY", {
+        get: function() { return pY; },
+    });
+
+    var moveN = function() {
+        cY--;
+        normalize();
     };
-    this.moveNE = function() {
-        this.cellY--;
-        this.cellX++;
-        this.normalize();
+    var moveNE = function() {
+        cY--;
+        cX++;
+        normalize();
     };
-    this.moveE = function() {
-        this.cellX++;
-        this.normalize();
+    var moveE = function() {
+        cX++;
+        normalize();
     };
-    this.moveSE = function() {
-        this.cellY++;
-        this.cellX++;
-        this.normalize();
+    var moveSE = function() {
+        cY++;
+        cX++;
+        normalize();
     };
-    this.moveS = function() {
-        this.cellY++;
-        this.normalize();
+    var moveS = function() {
+        cY++;
+        normalize();
     };
-    this.moveSW = function() {
-        this.cellY++;
-        this.cellX--;
-        this.normalize();
+    var moveSW = function() {
+        cY++;
+        cX--;
+        normalize();
     };
-    this.moveW = function() {
-        this.cellX--;
-        this.normalize();
+    var moveW = function() {
+        cX--;
+        normalize();
     };
-    this.moveNW = function() {
-        this.cellY--;
-        this.cellX--;
-        this.normalize();
+    var moveNW = function() {
+        cY--;
+        cX--;
+        normalize();
     };
 
     this.moveTowardsPixel = function(destX, destY) {
-        var deltaX = destX - (this.pixelX + CELL_SIZE / 2);
-        var deltaY = destY - (this.pixelY + CELL_SIZE / 2);
+        var deltaX = destX - (pX + CELL_SIZE / 2);
+        var deltaY = destY - (pY + CELL_SIZE / 2);
         var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
 
-        if (angle < -150) {
-            this.moveW();
-        } else if (angle < -120) {
-            this.moveNW();
-        } else if (angle < -60) {
-            this.moveN();
-        } else if (angle < -30) {
-            this.moveNE();
-        } else if (angle < 30) {
-            this.moveE();
-        } else if (angle < 60) {
-            this.moveSE();
-        } else if (angle < 120) {
-            this.moveS();
-        } else if (angle < 150) {
-            this.moveSW();
+        if (angle < -157.5) {
+            moveW();
+        } else if (angle < -112.5) {
+            moveNW();
+        } else if (angle < -67.5) {
+            moveN();
+        } else if (angle < -22.5) {
+            moveNE();
+        } else if (angle < 22.5) {
+            moveE();
+        } else if (angle < 67.5) {
+            moveSE();
+        } else if (angle < 112.5) {
+            moveS();
+        } else if (angle < 157.5) {
+            moveSW();
         } else {
-            this.moveW();
+            moveW();
         }
     };
-
-    45 / 2
 
     this.moveTowardsCell = function(cellLoc) {
         this.moveTowardsPixel(cellLoc.pixelX + CELL_SIZE / 2,
@@ -109,13 +130,14 @@ function CellLoc(cellX, cellY) {
     };
 
     this.equals = function(cellLoc) {
-        return this.cellX == cellLoc.cellX && this.cellY == cellLoc.cellY;
+        return cX == cellLoc.cellX && cY == cellLoc.cellY;
     };
 
     this.pixelEquals = function(s) {
-        return this.pixelX == s.x && this.pixelY == s.y;
+        return pX == s.x && pY == s.y;
     };
 }
+
 
 function createGameObject(loc, image, frameNum) {
     var s = new Sprite(CELL_SIZE, CELL_SIZE);
