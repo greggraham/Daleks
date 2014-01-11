@@ -61,66 +61,52 @@ function CellLoc(cInX, cInY) {
         get: function() { return pY; },
     });
 
-    var moveN = function() {
-        cY--;
-        normalize();
-    };
-    var moveNE = function() {
-        cY--;
-        cX++;
-        normalize();
-    };
-    var moveE = function() {
-        cX++;
-        normalize();
-    };
-    var moveSE = function() {
-        cY++;
-        cX++;
-        normalize();
-    };
-    var moveS = function() {
-        cY++;
-        normalize();
-    };
-    var moveSW = function() {
-        cY++;
-        cX--;
-        normalize();
-    };
-    var moveW = function() {
-        cX--;
-        normalize();
-    };
-    var moveNW = function() {
-        cY--;
-        cX--;
-        normalize();
-    };
 
     this.moveTowardsPixel = function(destX, destY) {
         var deltaX = destX - (pX + CELL_SIZE / 2);
         var deltaY = destY - (pY + CELL_SIZE / 2);
+
+        if (Math.abs(deltaX) < NO_MOVE_DELTA && Math.abs(deltaY) < NO_MOVE_DELTA)
+            return;
+
         var angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
 
-        if (angle < -157.5) {
-            moveW();
+        if (angle < -157.5 || angle > 157.5) {
+            // Move W
+            cX--;
+            normalize();
         } else if (angle < -112.5) {
-            moveNW();
+            // Move NW
+            cY--;
+            cX--;
+            normalize();
         } else if (angle < -67.5) {
-            moveN();
+            // Move N
+            cY--;
+            normalize();
         } else if (angle < -22.5) {
-            moveNE();
+            // Move NE
+            cY--;
+            cX++;
+            normalize();
         } else if (angle < 22.5) {
-            moveE();
+            // Move E
+            cX++;
+            normalize();
         } else if (angle < 67.5) {
-            moveSE();
+            // Move SE
+            cY++;
+            cX++;
+            normalize();
         } else if (angle < 112.5) {
-            moveS();
-        } else if (angle < 157.5) {
-            moveSW();
+            // Move S
+            cY++;
+            normalize();
         } else {
-            moveW();
+            // Move SW
+            cY++;
+            cX--;
+            normalize();
         }
     };
 
