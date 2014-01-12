@@ -2,6 +2,8 @@
 
 var CELL_SIZE = 32;
 var NO_MOVE_DELTA = CELL_SIZE / 2;
+var COLLISION_DELTA = CELL_SIZE / 4;
+
 var ROWS = 15;
 var COLUMNS = 15;
 var HSIZE = CELL_SIZE * COLUMNS;
@@ -10,6 +12,7 @@ var VSIZE = CELL_SIZE * ROWS;
 var DOCTOR_FRAME = 0;
 var DALEK_FRAME = 1;
 var TARDIS_FRAME = 2;
+var BLAST_FRAME = 3;
 var SPEED = 3;
 var NUM_DALEKS = 15;
 var NORMAL = 0;
@@ -122,22 +125,35 @@ function CellLoc(cInX, cInY) {
     this.pixelEquals = function(s) {
         return pX == s.x && pY == s.y;
     };
+
+    this.pixelDistance = function(cellLoc) {
+        var dx = pX - cellLoc.pixelX;
+        var dy = pY - cellLoc.pixelY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 }
 
 
-function createGameObject(loc, image, frameNum) {
+function createGameObject(loc, image, frameNum, g) {
+    var state = NORMAL;
+    var deathAge = -1;
+    var game = g
     var s = new Sprite(CELL_SIZE, CELL_SIZE);
+
     s.image = image;
     s.x = loc.pixelX;
     s.y = loc.pixelY;
     s.frame = frameNum;
-    var obj = {
+    game.rootScene.addChild(s);
+
+    var that = {
         cellLoc : loc,
         sprite : s,
+
         moveSprite : function() {
-            var s = this.sprite;
-            var toX = this.cellLoc.pixelX;
-            var toY = this.cellLoc.pixelY;
+            var s = that.sprite;
+            var toX = that.cellLoc.pixelX;
+            var toY = that.cellLoc.pixelY;
             if (s.y > toY) {
                 if (Math.abs(s.y - toY) < SPEED) {
                     s.y = toY;
@@ -165,33 +181,52 @@ function createGameObject(loc, image, frameNum) {
                 }
             }
         },
-        arrived : function() {
-            return this.cellLoc.pixelEquals(this.sprite);
+
+        isAlive : function() {
+            return state === NORMAL;
         },
+
+        die : function() {
+            state = EXPLODING;
+            that.sprite.frame = BLAST_FRAME;
+            deathAge = that.sprite.age + 20;
+        },
+
+        upkeep : function() {
+            if (state === EXPLODING && that.sprite.age > deathAge) {
+                state = DEAD;
+                game.rootScene.removeChild(that.sprite);
+            }
+        },
+
+        collision : function(gameObj) {
+            return that.cellLoc.pixelDistance(gameObj.cellLoc) < COLLISION_DELTA;
+        }
     };
-    return obj;
+
+    return that;
 }
 
 
-function createDoctor(loc, image) {
-    var doctor = Object.create(createGameObject(loc, image, DOCTOR_FRAME));
-    doctor.moveTo = function(e) {
-        this.cellLoc.moveTowardsPixel(e.x, e.y);
+function createDoctor(loc, image, g) {
+    var that = Object.create(createGameObject(loc, image, DOCTOR_FRAME, g));
+
+    that.moveTo = function(e) {
+        that.cellLoc.moveTowardsPixel(e.x, e.y);
     };
-    return doctor;
+
+    return that;
 }
 
 
-function createDalek(loc, image) {
-    var dalek = Object.create(createGameObject(loc, image, DALEK_FRAME));
-    dalek.state = NORMAL;
-    dalek.moveTo = function(cellLoc) {
-        this.cellLoc.moveTowardsCell(cellLoc);
+function createDalek(loc, image, g) {
+    var that = Object.create(createGameObject(loc, image, DALEK_FRAME, g));
+
+    that.moveTo = function(cellLoc) {
+        that.cellLoc.moveTowardsCell(cellLoc);
     };
-    dalek.sprite.addEventListener(Event.ENTER_FRAME, function() {
-        dalek.moveSprite()
-    });
-    return dalek;
+
+    return that;
 }
 
 
@@ -223,25 +258,48 @@ window.onload = function() {
         //
         // Create and configure the game objects
         //
+
+        // Create the Tardis
         var tardis = createGameObject(new CellLoc(0, randInt(ROWS)),
                                       game.assets['daleks.png'],
-                                      TARDIS_FRAME);
-        game.rootScene.addChild(tardis.sprite);
+                                      TARDIS_FRAME,
+                                      game);
 
-        var doctor = createDoctor(new CellLoc(COLUMNS - 1, randInt(ROWS)),
-                                  game.assets['daleks.png']);
-
+        // Create the Daleks
         var daleks = new Array(NUM_DALEKS);
         for (var i = 0; i < NUM_DALEKS; i++) {
-            daleks[i] = createDalek(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
-                                    game.assets['daleks.png']);
-            game.rootScene.addChild(daleks[i].sprite);
+            var newDalek = createDalek(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
+                                    game.assets['daleks.png'],
+                                    game);
+            newDalek.sprite.addEventListener(Event.ENTER_FRAME, function() {
+                if (newDalek.isAlive()) {
+                    newDalek.moveSprite();
+                    for (var j = 0; j < NUM_DALEKS; j++) {
+                        if (daleks[j].isAlive() && newDalek.collision(daleks[j])) {
+                            newDalek.die();
+                            daleks[j].die();
+                        }
+                    }
+                }
+            });
+            daleks[i] = newDalek;
         }
 
+        // Create the Doctor
+        var doctor = createDoctor(new CellLoc(COLUMNS - 1, randInt(ROWS)),
+                                  game.assets['daleks.png'],
+                                  game);
+
         doctor.sprite.addEventListener(Event.ENTER_FRAME, function() {
-            doctor.moveSprite();
+            if (doctor.isAlive()) {
+                doctor.moveSprite();
+                for (var i = 0; i < NUM_DALEKS; i++) {
+                    if (daleks[i].isAlive() && daleks[i].collision(doctor)) {
+                        doctor.die();
+                    }
+                }
+            }
         });
-        game.rootScene.addChild(doctor.sprite);
 
 
         //
@@ -250,15 +308,18 @@ window.onload = function() {
 
         function processTouch(e) {
 
-            // Instruct all of the daleks to move to the Doctor's current location.
-            for (var i = 0; i < NUM_DALEKS; i++) {
-                if (daleks[i].state == NORMAL) {
-                    daleks[i].moveTo(doctor.cellLoc);
-                }
-            }
+            if (doctor.isAlive()) {
 
-            // Instruct the Doctor to move in the direction of the touch.
-            doctor.moveTo(e);
+                // Instruct all of the daleks to move to the Doctor's current location.
+                for (var i = 0; i < NUM_DALEKS; i++) {
+                    if (daleks[i].state == NORMAL) {
+                        daleks[i].moveTo(doctor.cellLoc);
+                    }
+                }
+
+                // Instruct the Doctor to move in the direction of the touch.
+                doctor.moveTo(e);
+            }
         }
 
         // Add touch listener to background and all game objects so that the user can
