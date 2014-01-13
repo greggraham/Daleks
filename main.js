@@ -15,7 +15,6 @@ var TARDIS_FRAME = 2;
 var BLAST_FRAME = 3;
 var SPEED = 3;
 var NUM_DALEKS = 15;
-
 var NORMAL = 0;
 var DESTINED = 1;
 var EXPLODING = 3;
@@ -28,14 +27,6 @@ enchant();
 function randInt(limit) {
     return Math.floor(Math.random() * limit);
 }
-
-// Calculate the distance between two sprites
-function pixelDistance(s1, s2) {
-    var dx = s1.x - s2.x;
-    var dy = s1.y - s2.y;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
 
 // Cell location object
 function CellLoc(cInX, cInY) {
@@ -134,16 +125,22 @@ function CellLoc(cInX, cInY) {
     this.pixelEquals = function(s) {
         return pX == s.x && pY == s.y;
     };
+
+    this.pixelDistance = function(cellLoc) {
+        var dx = pX - cellLoc.pixelX;
+        var dy = pY - cellLoc.pixelY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 }
 
 
-function createGameObject(loc, frameNum, g) {
+function createGameObject(loc, image, frameNum, g) {
     var state = NORMAL;
     var deathAge = -1;
     var game = g
     var s = new Sprite(CELL_SIZE, CELL_SIZE);
 
-    s.image = game.assets['daleks.png'];
+    s.image = image;
     s.x = loc.pixelX;
     s.y = loc.pixelY;
     s.frame = frameNum;
@@ -203,7 +200,7 @@ function createGameObject(loc, frameNum, g) {
         },
 
         collision : function(gameObj) {
-            return pixelDistance(that.sprite, gameObj.sprite) < COLLISION_DELTA;
+            return that.cellLoc.pixelDistance(gameObj.cellLoc) < COLLISION_DELTA;
         }
     };
 
@@ -211,18 +208,8 @@ function createGameObject(loc, frameNum, g) {
 }
 
 
-function createTardis(game) {
-    var proto = createGameObject(new CellLoc(0, randInt(ROWS)),
-                                 TARDIS_FRAME, game);
-    var that = Object.create(proto);
-
-    return that;
-}
-
-function createDoctor(game) {
-    var proto = createGameObject(new CellLoc(COLUMNS - 1, randInt(ROWS)),
-                                 DOCTOR_FRAME, game);
-    var that = Object.create(proto);
+function createDoctor(loc, image, g) {
+    var that = Object.create(createGameObject(loc, image, DOCTOR_FRAME, g));
 
     that.moveTo = function(e) {
         that.cellLoc.moveTowardsPixel(e.x, e.y);
@@ -232,25 +219,8 @@ function createDoctor(game) {
 }
 
 
-function createDalek(game, dalekArray) {
-    var proto = createGameObject(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
-                                 DALEK_FRAME, game);
-    var that = Object.create(proto);
-    var daleks = dalekArray;
-
-    that.sprite.addEventListener(Event.ENTER_FRAME, function() {
-        if (that.isAlive()) {
-            that.moveSprite();
-            for (var j = 0; j < NUM_DALEKS; j++) {
-                if (that !== daleks[j] && daleks[j].isAlive() && that.collision(daleks[j])) {
-                    that.die();
-                    daleks[j].die();
-                }
-            }
-        }
-        that.upkeep();
-    });
-
+function createDalek(loc, image, g) {
+    var that = Object.create(createGameObject(loc, image, DALEK_FRAME, g));
 
     that.moveTo = function(cellLoc) {
         that.cellLoc.moveTowardsCell(cellLoc);
@@ -290,16 +260,35 @@ window.onload = function() {
         //
 
         // Create the Tardis
-        var tardis = createTardis(game);
+        var tardis = createGameObject(new CellLoc(0, randInt(ROWS)),
+                                      game.assets['daleks.png'],
+                                      TARDIS_FRAME,
+                                      game);
 
         // Create the Daleks
         var daleks = new Array(NUM_DALEKS);
         for (var i = 0; i < NUM_DALEKS; i++) {
-            daleks[i] = createDalek(game, daleks);
+            var newDalek = createDalek(new CellLoc(1 + randInt(COLUMNS - 3), randInt(ROWS)),
+                                    game.assets['daleks.png'],
+                                    game);
+            newDalek.sprite.addEventListener(Event.ENTER_FRAME, function() {
+                if (newDalek.isAlive()) {
+                    newDalek.moveSprite();
+                    for (var j = 0; j < NUM_DALEKS; j++) {
+                        if (daleks[j].isAlive() && newDalek.collision(daleks[j])) {
+                            newDalek.die();
+                            daleks[j].die();
+                        }
+                    }
+                }
+            });
+            daleks[i] = newDalek;
         }
 
         // Create the Doctor
-        var doctor = createDoctor(game);
+        var doctor = createDoctor(new CellLoc(COLUMNS - 1, randInt(ROWS)),
+                                  game.assets['daleks.png'],
+                                  game);
 
         doctor.sprite.addEventListener(Event.ENTER_FRAME, function() {
             if (doctor.isAlive()) {
@@ -310,7 +299,6 @@ window.onload = function() {
                     }
                 }
             }
-            doctor.upkeep();
         });
 
 
@@ -324,7 +312,7 @@ window.onload = function() {
 
                 // Instruct all of the daleks to move to the Doctor's current location.
                 for (var i = 0; i < NUM_DALEKS; i++) {
-                    if (daleks[i].isAlive()) {
+                    if (daleks[i].state == NORMAL) {
                         daleks[i].moveTo(doctor.cellLoc);
                     }
                 }
