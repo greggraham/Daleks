@@ -225,10 +225,27 @@ function createTardis(game) {
     return that;
 }
 
-function createDoctor(game) {
+function createDoctor(game, tardis, daleks) {
     var proto = createGameObject(new CellLoc(COLUMNS - 1, randInt(ROWS)),
                                  DOCTOR_FRAME, game);
     var that = Object.create(proto);
+
+    that.sprite.addEventListener(Event.ENTER_FRAME, function() {
+        if (that.isAlive()) {
+            if (that.collision(tardis)) {
+                that.enterTardis();
+                that.win();
+            }
+            that.moveSprite();
+            for (var i = 0; i < NUM_DALEKS; i++) {
+                if (daleks[i].isAlive() && daleks[i].collision(that)) {
+                    that.die();
+                    game.assets['dalekgun.mp3'].play();
+                }
+            }
+        }
+        that.upkeep();
+    });
 
     that.moveTo = function(e) {
         that.cellLoc.moveTowardsPixel(e.x, e.y);
@@ -313,24 +330,7 @@ window.onload = function() {
         }
 
         // Create the Doctor
-        var doctor = createDoctor(game);
-
-        doctor.sprite.addEventListener(Event.ENTER_FRAME, function() {
-            if (doctor.isAlive()) {
-                if (doctor.collision(tardis)) {
-                    doctor.enterTardis();
-                    doctor.win();
-                }
-                doctor.moveSprite();
-                for (var i = 0; i < NUM_DALEKS; i++) {
-                    if (daleks[i].isAlive() && daleks[i].collision(doctor)) {
-                        doctor.die();
-                        game.assets['dalekgun.mp3'].play();
-                    }
-                }
-            }
-            doctor.upkeep();
-        });
+        var doctor = createDoctor(game, tardis, daleks);
 
 
         //
