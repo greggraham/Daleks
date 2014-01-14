@@ -20,6 +20,7 @@ var NORMAL = 0;
 var DESTINED = 1;
 var EXPLODING = 3;
 var DEAD = 4;
+var WIN = 5;
 
 // Initialize the Enchant.js library.
 enchant();
@@ -204,7 +205,12 @@ function createGameObject(loc, frameNum, g) {
 
         collision : function(gameObj) {
             return pixelDistance(that.sprite, gameObj.sprite) < COLLISION_DELTA;
+        },
+
+        win : function() {
+            state = WIN;
         }
+
     };
 
     return that;
@@ -227,6 +233,11 @@ function createDoctor(game) {
     that.moveTo = function(e) {
         that.cellLoc.moveTowardsPixel(e.x, e.y);
     };
+
+    that.enterTardis = function() {
+        game.rootScene.removeChild(that.sprite);
+        game.assets['tardis.mp3'].play();
+    }
 
     return that;
 }
@@ -256,6 +267,7 @@ function createDalek(game, dalekArray) {
         that.cellLoc.moveTowardsCell(cellLoc);
     };
 
+
     return that;
 }
 
@@ -263,7 +275,7 @@ function createDalek(game, dalekArray) {
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
-    game.preload('daleks.png', 'cell.png'); // Add sound files here
+    game.preload('daleks.png', 'cell.png', 'scream.mp3', 'exterminate.mp3', 'doctordie.mp3', 'tardis.mp3');
 
     game.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
@@ -303,6 +315,10 @@ window.onload = function() {
 
         doctor.sprite.addEventListener(Event.ENTER_FRAME, function() {
             if (doctor.isAlive()) {
+                if (doctor.collision(tardis)) {
+                    doctor.enterTardis();
+                    doctor.win();
+                }
                 doctor.moveSprite();
                 for (var i = 0; i < NUM_DALEKS; i++) {
                     if (daleks[i].isAlive() && daleks[i].collision(doctor)) {
@@ -331,6 +347,13 @@ window.onload = function() {
 
                 // Instruct the Doctor to move in the direction of the touch.
                 doctor.moveTo(e);
+
+                var chance = randInt(20);
+//                if (chance === 0) {
+//                    game.assets['exterminate.mp3'].play();
+//                } else if (chance === 1) {
+//                    game.assets['doctordie.mp3'].play();
+//                }
             }
         }
 
@@ -344,6 +367,7 @@ window.onload = function() {
             daleks[i].sprite.addEventListener(Event.TOUCH_START, processTouch);
         }
 
+        game.assets['scream.mp3'].play();
     };
 
     // Allons-y! (see http://youtu.be/hBNH8qub_vI)
