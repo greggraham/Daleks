@@ -233,7 +233,7 @@ function createDalek(loc, image, g) {
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
-    game.preload('daleks.png', 'cell.png');
+    game.preload('daleks.png', 'cell.png'); // Add sound files here
 
     game.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
