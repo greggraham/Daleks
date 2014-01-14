@@ -256,6 +256,7 @@ function createDalek(game, dalekArray) {
                 if (that !== daleks[j] && daleks[j].isAlive() && that.collision(daleks[j])) {
                     that.die();
                     daleks[j].die();
+                    game.assets['dalekgun.mp3'].play();
                 }
             }
         }
@@ -275,7 +276,8 @@ function createDalek(game, dalekArray) {
 window.onload = function() {
     var game = new Core(HSIZE, VSIZE);
     game.fps = 16;
-    game.preload('daleks.png', 'cell.png', 'scream.mp3', 'exterminate.mp3', 'doctordie.mp3', 'tardis.mp3');
+    game.preload('daleks.png', 'cell.png', 'scream.mp3', 'exterminate.mp3', 'doctordie.mp3',
+                 'tardis.mp3', 'dalekgun.mp3');
 
     game.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
@@ -323,6 +325,7 @@ window.onload = function() {
                 for (var i = 0; i < NUM_DALEKS; i++) {
                     if (daleks[i].isAlive() && daleks[i].collision(doctor)) {
                         doctor.die();
+                        game.assets['dalekgun.mp3'].play();
                     }
                 }
             }
@@ -348,12 +351,12 @@ window.onload = function() {
                 // Instruct the Doctor to move in the direction of the touch.
                 doctor.moveTo(e);
 
-                var chance = randInt(20);
-//                if (chance === 0) {
-//                    game.assets['exterminate.mp3'].play();
-//                } else if (chance === 1) {
-//                    game.assets['doctordie.mp3'].play();
-//                }
+                var chance = randInt(8);
+                if (chance === 0) {
+                    game.assets['exterminate.mp3'].play();
+                } else if (chance === 1) {
+                    game.assets['doctordie.mp3'].play();
+                }
             }
         }
 
