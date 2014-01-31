@@ -17,7 +17,6 @@ var SPEED = 3;
 var NUM_DALEKS = 15;
 
 var NORMAL = 0;
-var DESTINED = 1;
 var EXPLODING = 3;
 var DEAD = 4;
 var WIN = 5;
@@ -67,11 +66,11 @@ function CellLoc(cInX, cInY) {
     });
 
     Object.defineProperty(this, "pixelX", {
-        get: function() { return pX; },
+        get: function() { return pX; }
     });
 
     Object.defineProperty(this, "pixelY", {
-        get: function() { return pY; },
+        get: function() { return pY; }
     });
 
 
@@ -141,7 +140,7 @@ function CellLoc(cInX, cInY) {
 function createGameObject(loc, frameNum, g) {
     var state = NORMAL;
     var deathAge = -1;
-    var game = g
+    var game = g;
     var s = new Sprite(CELL_SIZE, CELL_SIZE);
 
     s.image = game.assets['daleks.png'];
@@ -254,7 +253,7 @@ function createDoctor(game, tardis, daleks) {
     that.enterTardis = function() {
         game.rootScene.removeChild(that.sprite);
         game.assets['tardis.mp3'].play();
-    }
+    };
 
     return that;
 }
@@ -300,9 +299,10 @@ window.onload = function() {
         var bg = new Sprite(HSIZE, VSIZE);
         var maptip = game.assets['cell.png'];
         var image = new Surface(HSIZE, VSIZE);
+		var i, j;
 
-        for (var j = 0; j < VSIZE; j += CELL_SIZE) {
-            for (var i = 0; i < HSIZE; i += CELL_SIZE) {
+        for (j = 0; j < VSIZE; j += CELL_SIZE) {
+            for (i = 0; i < HSIZE; i += CELL_SIZE) {
                 image.draw(maptip, 0, 0, CELL_SIZE, CELL_SIZE, i, j, CELL_SIZE, CELL_SIZE);
                 // maptip: the preloaded image asset used as the source image
                 // 0, 0: coordinates of upper left corner of the source clipping
@@ -325,7 +325,7 @@ window.onload = function() {
 
         // Create the Daleks
         var daleks = new Array(NUM_DALEKS);
-        for (var i = 0; i < NUM_DALEKS; i++) {
+        for (i = 0; i < NUM_DALEKS; i++) {
             daleks[i] = createDalek(game, daleks);
         }
 
@@ -366,7 +366,7 @@ window.onload = function() {
         bg.addEventListener(Event.TOUCH_START, processTouch);
         tardis.sprite.addEventListener(Event.TOUCH_START, processTouch);
         doctor.sprite.addEventListener(Event.TOUCH_START, processTouch);
-        for (var i = 0; i < NUM_DALEKS; i++) {
+        for (i = 0; i < NUM_DALEKS; i++) {
             daleks[i].sprite.addEventListener(Event.TOUCH_START, processTouch);
         }
 
